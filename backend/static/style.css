@@ -170,6 +170,25 @@ table { width: 100%; border-collapse: collapse; margin-top: 10px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
 th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-size: 11px; }
 
+/* Contenitore con scroll verticale interno per le tabelle che possono
+   crescere molto (risultati analisi, coda, storico): solo questa parte
+   scorre, non l'intera pagina. L'intestazione resta visibile (sticky)
+   durante lo scroll. */
+.table-scroll {
+  max-height: 55vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.table-scroll table { margin-top: 0; }
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-panel);
+  z-index: 1;
+}
+.table-scroll tbody tr:last-child td { border-bottom: none; }
+
 .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius); background: var(--bg-elevated); }
 
 .badge { padding: 2px 9px; border-radius: 10px; font-size: 11px; display: inline-flex; align-items: center; }

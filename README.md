@@ -5,6 +5,23 @@ Self-hosted app for downloading videos, photos and reels from Facebook
 configurable naming, and output organized for Jellyfin as a **TV show
 per profile**.
 
+## Screenshots
+
+<!--
+  Replace the placeholders below with real screenshots once you have
+  them (see "Adding your own screenshots" further down). GitHub renders
+  images directly from the repo once they're committed under
+  screenshots/ — no external hosting needed.
+-->
+
+| Download | History |
+|---|---|
+| ![Download tab](screenshots/screenshot_01.png) | ![History tab](screenshots/screenshot_03.png) |
+
+| Settings | Logs |
+|---|---|
+| ![Settings tab](screenshots/screenshot_04.png) | ![Logs tab](screenshots/screenshot_02.png) |
+
 ## Stack
 
 - FastAPI (backend + API) + SQLite (download history, deduplication)
@@ -266,3 +283,29 @@ also delete sibling photos not selected for re-download.
   with different permissions are needed in the future)
 - Push/email notification (not just an in-app banner) when cookies expire
 - Full translations for the remaining languages in the picker
+
+## Adding your own screenshots
+
+1. Open the app in your browser (`http://<host>:<port>`, see Quick start above).
+2. For each tab you want to show (Download, History, Settings, Login, Logs),
+   take a screenshot:
+   - **Windows**: `Win+Shift+S`, select the browser window area
+   - **macOS**: `Cmd+Shift+4`, then press Space and click the browser window
+   - **Linux**: varies by desktop environment (GNOME: `PrtScn` or the
+     Screenshot app; KDE: Spectacle)
+3. Before saving, make sure no real personal content is visible — use a
+   test profile/post, or crop/blur real names, thumbnails, and the
+   cookie banner if it shows session details.
+4. Save the files as PNG into the `screenshots/` folder in this repo,
+   named to match the links already in the Screenshots section above
+   (`download.png`, `history.png`, `settings.png`, `logs.png`) — or use
+   your own names and update the links in this README to match.
+5. Commit and push:
+   ```bash
+   git add screenshots/
+   git commit -m "Add screenshots"
+   git push
+   ```
+   GitHub renders the images directly from the repo once pushed — no
+   external image hosting needed.
+

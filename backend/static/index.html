@@ -4,12 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>fb-downloader</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260831" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260901" />
 <!-- Note for maintainers: change ?v=... on these files (and on the
      favicon) EVERY TIME they're modified, otherwise the user's browser
      may keep serving a cached copy even after a container rebuild,
      masking fixes that were just applied. -->
-<link rel="stylesheet" href="style.css?v=20260831" />
+<link rel="stylesheet" href="style.css?v=20260901" />
 </head>
 <body>
 
@@ -79,29 +79,33 @@
         <strong id="results-title">Results</strong>
         <button class="btn" id="btn-download-selected"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="btn_download_selected">Download selected</span></button>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th><input type="checkbox" id="select-all-results" title="Select all" /></th>
-            <th></th>
-            <th data-i18n="th_title">Title</th>
-            <th data-i18n="th_type">Type</th>
-            <th data-i18n="th_date">Date</th>
-            <th data-i18n="th_predicted_path">Predicted path</th>
-          </tr>
-        </thead>
-        <tbody id="results-body"></tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all-results" title="Select all" /></th>
+              <th></th>
+              <th data-i18n="th_title">Title</th>
+              <th data-i18n="th_type">Type</th>
+              <th data-i18n="th_date">Date</th>
+              <th data-i18n="th_predicted_path">Predicted path</th>
+            </tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="panel" id="queue-panel" style="display:none;">
       <strong><svg class="icon"><use href="#icon-history"/></svg><span data-i18n="queue_panel_title">Queued / in progress</span></strong>
-      <table>
-        <thead>
-          <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_type">Type</th><th data-i18n="th_title">Title</th><th data-i18n="th_status">Status</th></tr>
-        </thead>
-        <tbody id="queue-body"></tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_type">Type</th><th data-i18n="th_title">Title</th><th data-i18n="th_status">Status</th></tr>
+          </thead>
+          <tbody id="queue-body"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -110,22 +114,26 @@
     <div class="panel">
       <strong><svg class="icon"><use href="#icon-refresh"/></svg><span data-i18n="sources_title">Previously analyzed links</span></strong>
       <p class="hint"><svg class="icon"><use href="#icon-info"/></svg><span data-i18n="sources_hint">Reload an already analyzed profile/post…</span></p>
-      <table>
-        <thead>
-          <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_url">URL</th><th data-i18n="th_items_found">Items found</th><th data-i18n="th_last_analyzed">Last analyzed</th><th></th></tr>
-        </thead>
-        <tbody id="sources-body"></tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_url">URL</th><th data-i18n="th_items_found">Items found</th><th data-i18n="th_last_analyzed">Last analyzed</th><th></th></tr>
+          </thead>
+          <tbody id="sources-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <div class="panel">
       <strong><svg class="icon"><use href="#icon-history"/></svg><span data-i18n="history_title">Download history</span></strong>
-      <table>
-        <thead>
-          <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_type">Type</th><th data-i18n="th_title">Title</th><th data-i18n="th_season_episode">Season/Ep.</th><th data-i18n="th_date">Date</th><th data-i18n="th_path">Path</th><th data-i18n="th_status">Status</th></tr>
-        </thead>
-        <tbody id="history-body"></tbody>
-      </table>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_type">Type</th><th data-i18n="th_title">Title</th><th data-i18n="th_season_episode">Season/Ep.</th><th data-i18n="th_date">Date</th><th data-i18n="th_path">Path</th><th data-i18n="th_status">Status</th></tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -212,7 +220,7 @@
 
 </main>
 
-<script src="i18n.js?v=20260831"></script>
-<script src="app.js?v=20260831"></script>
+<script src="i18n.js?v=20260901"></script>
+<script src="app.js?v=20260901"></script>
 </body>
 </html>

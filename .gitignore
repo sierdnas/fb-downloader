@@ -1,7 +1,7 @@
-# Dati persistenti: DB SQLite + cookie di sessione Facebook — MAI su GitHub
+# Persistent data: SQLite DB + Facebook session cookies — NEVER on GitHub
 data/
 
-# Config locale con i tuoi path reali
+# Local config with your real paths
 .env
 
 # Python
