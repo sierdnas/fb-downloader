@@ -14,13 +14,13 @@ per profile**.
   screenshots/ — no external hosting needed.
 -->
 
-| Download | History |
+| Download | Settings |
 |---|---|
-| ![Download tab](screenshots/screenshot_01.png) | ![History tab](screenshots/screenshot_03.png) |
+| ![Download tab](screenshots/screenshot_01.png) | ![Settings tab](screenshots/screenshot_03.png) |
 
-| Settings | Logs |
+| History | Logs |
 |---|---|
-| ![Settings tab](screenshots/screenshot_04.png) | ![Logs tab](screenshots/screenshot_02.png) |
+| ![History tab](screenshots/screenshot_04.png) | ![Logs tab](screenshots/screenshot_02.png) |
 
 ## Stack
 
