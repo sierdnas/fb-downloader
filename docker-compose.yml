@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  fb-downloader:
+    build: ./backend
+    container_name: fb-downloader
+    restart: unless-stopped
+    ports:
+      # DO NOT touch the right side (8686): it's the FIXED port the app
+      # listens on inside the container (set in the Dockerfile). To
+      # change the port exposed on the NAS, edit APP_PORT in .env —
+      # not this file.
+      - "${APP_PORT:-9797}:8686"
+    environment:
+      - TZ=Europe/Rome
+      - PUID=1000              # align with Ugreen/Jellyfin UID/GID to avoid permission issues
+      - PGID=10
+      # DO NOT touch: must match EXACTLY (case included) the right side
+      # of the "output" volumes below. To change where files end up ON
+      # THE NAS, edit OUTPUT_ROOT / PHOTO_OUTPUT_ROOT in .env — not
+      # these two values.
+      - MEDIA_ROOT=/media/facebook
+      - PHOTO_MEDIA_ROOT=/media/facebook-photos
+      # Web UI authentication (HTTP Basic). If ADMIN_PASSWORD is empty
+      # in your .env, the app stays open without login (previous
+      # behavior). Set it to protect access.
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+    volumes:
+      - ./data:/config                                                      # SQLite DB, cookies, persistent config
+      - ${OUTPUT_ROOT:-/volume2/media/facebook}:/media/facebook             # video/reel -> Jellyfin "TV Shows" library
+      - ${PHOTO_OUTPUT_ROOT:-/volume2/media/facebook-photos}:/media/facebook-photos  # photos -> Jellyfin "Photos" library, SEPARATE folder
+    networks:
+      - media_net   # requires the network to already exist (see note below)
+
+networks:
+  media_net:
+    external: true

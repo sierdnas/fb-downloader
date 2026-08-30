@@ -1,0 +1,17 @@
+# Dati persistenti: DB SQLite + cookie di sessione Facebook — MAI su GitHub
+data/
+
+# Config locale con i tuoi path reali
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/

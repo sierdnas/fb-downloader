@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fb-downloader</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260831" />
+<!-- Note for maintainers: change ?v=... on these files (and on the
+     favicon) EVERY TIME they're modified, otherwise the user's browser
+     may keep serving a cached copy even after a container rebuild,
+     masking fixes that were just applied. -->
+<link rel="stylesheet" href="style.css?v=20260831" />
+</head>
+<body>
+
+<!-- SVG icon sprite (self-contained, no external dependencies) -->
+<svg style="display:none">
+  <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></symbol>
+  <symbol id="icon-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="9" cy="18" r="2"/></symbol>
+  <symbol id="icon-login" viewBox="0 0 24 24"><circle cx="7" cy="17" r="3"/><path d="M9.5 14.5L19 5"/><path d="M15 9l2 2"/><path d="M17 7l2 2"/></symbol>
+  <symbol id="icon-video" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z"/></symbol>
+  <symbol id="icon-photo" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5-4 4-2-2-5 5"/></symbol>
+  <symbol id="icon-reel" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="icon-error" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></symbol>
+  <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></symbol>
+  <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="8" r="0.6" fill="currentColor" stroke="none"/><line x1="12" y1="12" x2="12" y2="16"/></symbol>
+  <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></symbol>
+  <symbol id="icon-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+  <symbol id="icon-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></symbol>
+  <symbol id="icon-logs" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></symbol>
+  <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="icon-menu" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
+</svg>
+
+<header>
+  <button class="brand" id="brand-logo" type="button" aria-label="fb-downloader — Download">
+    <div class="brand-badge">f</div>
+    <h1>fb<span>-downloader</span></h1>
+  </button>
+  <button class="mobile-menu-btn" id="btn-mobile-menu" type="button" aria-label="Menu">
+    <svg class="icon icon-only icon-lg"><use href="#icon-menu"/></svg>
+  </button>
+  <nav id="main-nav">
+    <button data-tab="download" class="active"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="nav_download">Download</span></button>
+    <button data-tab="logs"><svg class="icon"><use href="#icon-logs"/></svg><span data-i18n="nav_logs">Log</span></button>
+    <button data-tab="history"><svg class="icon"><use href="#icon-history"/></svg><span data-i18n="nav_history">History</span></button>
+    <button data-tab="settings"><svg class="icon"><use href="#icon-settings"/></svg><span data-i18n="nav_settings">Settings</span></button>
+    <button data-tab="login"><svg class="icon"><use href="#icon-login"/></svg><span data-i18n="nav_login">Login</span></button>
+  </nav>
+</header>
+
+<div id="cookie-banner" class="banner">
+  <svg class="icon"><use href="#icon-error"/></svg>
+  <span id="cookie-banner-text"></span>
+</div>
+
+<main>
+
+  <!-- TAB: DOWNLOAD -->
+  <section id="tab-download" class="tab-content active">
+    <div class="panel">
+      <div class="row">
+        <textarea id="fb-url" class="grow" rows="3" data-i18n-placeholder="url_placeholder" placeholder="Paste one or more Facebook links, one per line…"></textarea>
+        <button class="btn" id="btn-analyze"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="btn_analyze">Analyze</span></button>
+      </div>
+      <p class="hint" data-i18n="hint_multi_url">One link per line to analyze several posts/reels at once.</p>
+      <div class="chips" id="type-filter">
+        <div class="chip selected" data-type="video"><svg class="icon"><use href="#icon-video"/></svg><span data-i18n="chip_video">Video</span></div>
+        <div class="chip selected" data-type="photo"><svg class="icon"><use href="#icon-photo"/></svg><span data-i18n="chip_photo">Photo</span></div>
+        <div class="chip selected" data-type="reel"><svg class="icon"><use href="#icon-reel"/></svg><span data-i18n="chip_reel">Reel</span></div>
+      </div>
+      <div class="hint" id="analyze-status"></div>
+    </div>
+
+    <div class="panel" id="results-panel" style="display:none;">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+        <strong id="results-title">Results</strong>
+        <button class="btn" id="btn-download-selected"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="btn_download_selected">Download selected</span></button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="select-all-results" title="Select all" /></th>
+            <th></th>
+            <th data-i18n="th_title">Title</th>
+            <th data-i18n="th_type">Type</th>
+            <th data-i18n="th_date">Date</th>
+            <th data-i18n="th_predicted_path">Predicted path</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+
+    <div class="panel" id="queue-panel" style="display:none;">
+      <strong><svg class="icon"><use href="#icon-history"/></svg><span data-i18n="queue_panel_title">Queued / in progress</span></strong>
+      <table>
+        <thead>
+          <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_type">Type</th><th data-i18n="th_title">Title</th><th data-i18n="th_status">Status</th></tr>
+        </thead>
+        <tbody id="queue-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TAB: HISTORY -->
+  <section id="tab-history" class="tab-content">
+    <div class="panel">
+      <strong><svg class="icon"><use href="#icon-refresh"/></svg><span data-i18n="sources_title">Previously analyzed links</span></strong>
+      <p class="hint"><svg class="icon"><use href="#icon-info"/></svg><span data-i18n="sources_hint">Reload an already analyzed profile/post…</span></p>
+      <table>
+        <thead>
+          <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_url">URL</th><th data-i18n="th_items_found">Items found</th><th data-i18n="th_last_analyzed">Last analyzed</th><th></th></tr>
+        </thead>
+        <tbody id="sources-body"></tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <strong><svg class="icon"><use href="#icon-history"/></svg><span data-i18n="history_title">Download history</span></strong>
+      <table>
+        <thead>
+          <tr><th data-i18n="th_profile">Profile</th><th data-i18n="th_type">Type</th><th data-i18n="th_title">Title</th><th data-i18n="th_season_episode">Season/Ep.</th><th data-i18n="th_date">Date</th><th data-i18n="th_path">Path</th><th data-i18n="th_status">Status</th></tr>
+        </thead>
+        <tbody id="history-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TAB: SETTINGS -->
+  <section id="tab-settings" class="tab-content">
+    <div class="panel">
+      <p class="hint"><svg class="icon"><use href="#icon-info"/></svg><span data-i18n="settings_hint">Available tokens…</span></p>
+      <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_folder_video">Video/reel folder</label>
+        <input type="text" id="setting-folder-video" class="grow" />
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_folder_photo">Photo folder</label>
+        <input type="text" id="setting-folder-photo" class="grow" />
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_filename_template">Filename template (video/reel)</label>
+        <input type="text" id="setting-filename" class="grow" />
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_filename_template_photo">Filename template (photo)</label>
+        <input type="text" id="setting-filename-photo" class="grow" />
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_date_format">Date format</label>
+        <input type="text" id="setting-dateformat" style="width:160px;" />
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_generate_nfo">Generate .nfo for Jellyfin (video/reel)</label>
+        <input type="checkbox" id="setting-nfo" />
+      </div>
+      <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_ui_language"><svg class="icon"><use href="#icon-globe"/></svg>Interface language</label>
+        <input type="text" id="setting-language" list="language-options" class="grow" />
+        <datalist id="language-options"></datalist>
+      </div>
+      <p class="hint" data-i18n="hint_language">Pick from the list or type the language name.</p>
+      <p class="hint" id="lang-fallback-notice" style="display:none;"></p>
+      <div class="row" style="margin-top: 16px;">
+        <button class="btn" id="btn-save-settings"><svg class="icon"><use href="#icon-check"/></svg><span data-i18n="btn_save_settings">Save settings</span></button>
+      </div>
+      <div class="hint" id="settings-status"></div>
+    </div>
+  </section>
+
+  <!-- TAB: LOGIN -->
+  <section id="tab-login" class="tab-content">
+    <div class="panel">
+      <p class="hint">
+        <svg class="icon"><use href="#icon-info"/></svg>
+        <span data-i18n-html="login_hint">Login hint…</span>
+      </p>
+      <div class="row">
+        <input type="file" id="cookie-file" accept=".txt" />
+        <button class="btn secondary" id="btn-clear-cookies"><svg class="icon"><use href="#icon-trash"/></svg><span data-i18n="btn_clear_cookies">Remove session</span></button>
+      </div>
+      <div class="hint" id="login-status"></div>
+    </div>
+  </section>
+
+  <!-- TAB: LOGS -->
+  <section id="tab-logs" class="tab-content">
+    <div class="panel">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+        <div class="row" style="gap: 6px;">
+          <label data-i18n="label_log_level" style="margin-right: 4px;">Level</label>
+          <div class="chips" id="log-level-filter" style="margin: 0;">
+            <div class="chip" data-level="0">0</div>
+            <div class="chip" data-level="1">1</div>
+            <div class="chip" data-level="2">2</div>
+            <div class="chip" data-level="3">3</div>
+          </div>
+        </div>
+        <div class="row" style="gap: 8px;">
+          <button class="btn secondary" id="btn-copy-logs"><svg class="icon"><use href="#icon-copy"/></svg><span data-i18n="btn_copy_logs">Copy</span></button>
+          <button class="btn secondary" id="btn-clear-logs"><svg class="icon"><use href="#icon-trash"/></svg><span data-i18n="btn_clear_logs">Clear</span></button>
+        </div>
+      </div>
+      <p class="hint" id="log-level-description"></p>
+      <textarea id="log-output" class="grow" readonly rows="20" style="font-family: monospace; font-size: 12px; width: 100%; resize: vertical;"></textarea>
+      <div class="hint" id="logs-status"></div>
+    </div>
+  </section>
+
+</main>
+
+<script src="i18n.js?v=20260831"></script>
+<script src="app.js?v=20260831"></script>
+</body>
+</html>
