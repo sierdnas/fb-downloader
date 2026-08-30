@@ -1,18 +1,11 @@
 # fb-downloader
 
 Self-hosted app for downloading videos, photos and reels from Facebook
-(profiles, posts, or direct links), with a Facebook-themed web UI,
+(posts or direct links), with a Facebook-themed web UI,
 configurable naming, and output organized for Jellyfin as a **TV show
 per profile**.
 
 ## Screenshots
-
-<!--
-  Replace the placeholders below with real screenshots once you have
-  them (see "Adding your own screenshots" further down). GitHub renders
-  images directly from the repo once they're committed under
-  screenshots/ — no external hosting needed.
--->
 
 | Download | Settings |
 |---|---|
