@@ -496,6 +496,9 @@ async function loadSettings() {
   $("#setting-dateformat").value = s.date_format;
   $("#setting-nfo").checked = s.generate_nfo;
   $("#setting-translate").checked = s.translate_description;
+  $("#facebook-token-status").innerHTML = s.facebook_access_token_configured
+    ? `<svg class="icon"><use href="#icon-check"/></svg>${t("msg_token_configured")}`
+    : `<svg class="icon"><use href="#icon-info"/></svg>${t("msg_token_not_configured")}`;
   $("#setting-language").value = languageLabel(s.ui_language || "en");
   applyTranslations(s.ui_language || "en");
   applyTheme(s.theme || "dark");

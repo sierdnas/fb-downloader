@@ -68,6 +68,20 @@ class Settings(BaseSettings):
     # network call per item and depends on an unofficial endpoint.
     translate_description: bool = False
 
+    # OPTIONAL: Facebook Graph API access token, for the profile poster
+    # fetch (nfo.py). Session cookies (cookies.txt) do NOT authenticate
+    # Graph API calls — that's a separate surface from the regular
+    # website, and without a real token graph.facebook.com/{id}/picture
+    # has been observed returning the generic silhouette placeholder
+    # even for pages that definitely have a real photo. Simplest form:
+    # an "app access token", just "{app-id}|{app-secret}" from a
+    # Facebook Developer app — set via FACEBOOK_ACCESS_TOKEN in .env,
+    # NEVER hardcoded here, NEVER exposed via GET /api/settings (server
+    # env var only, deliberately not a web-UI-editable setting so it
+    # can't leak into the browser or the in-app Log — see nfo.py, which
+    # also masks it out of any logged URL).
+    facebook_access_token: str = ""
+
     @property
     def db_path(self) -> Path:
         return self.config_dir / "fb-downloader.db"

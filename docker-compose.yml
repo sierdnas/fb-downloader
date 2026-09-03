@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   fb-downloader:
     build: ./backend
@@ -24,6 +26,10 @@ services:
       # behavior). Set it to protect access.
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      # OPTIONAL: Graph API access token for the profile poster fetch
+      # only (fanart/thumbnails are unaffected). See .env.example for
+      # how to obtain one. Leave unset in .env to skip poster fetching.
+      - FACEBOOK_ACCESS_TOKEN=${FACEBOOK_ACCESS_TOKEN:-}
     volumes:
       - ./data:/config                                                      # SQLite DB, cookies, persistent config
       - ${OUTPUT_ROOT:-/volume2/media/facebook}:/media/facebook             # video/reel -> Jellyfin "TV Shows" library

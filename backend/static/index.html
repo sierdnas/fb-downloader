@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>fb-downloader</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260913" />
-<link rel="manifest" href="manifest.json?v=20260913" />
-<link rel="apple-touch-icon" href="icons/icon-180.png?v=20260913" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260914" />
+<link rel="manifest" href="manifest.json?v=20260914" />
+<link rel="apple-touch-icon" href="icons/icon-180.png?v=20260914" />
 <meta name="theme-color" content="#1877F2" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -30,7 +30,7 @@
      favicon) EVERY TIME they're modified, otherwise the user's browser
      may keep serving a cached copy even after a container rebuild,
      masking fixes that were just applied. -->
-<link rel="stylesheet" href="style.css?v=20260913" />
+<link rel="stylesheet" href="style.css?v=20260914" />
 </head>
 <body>
 
@@ -59,7 +59,7 @@
 
 <header>
   <button class="brand" id="brand-logo" type="button" aria-label="fb-downloader — Download">
-    <img src="favicon.svg?v=20260913" alt="fb-downloader" class="brand-badge" />
+    <img src="favicon.svg?v=20260914" alt="fb-downloader" class="brand-badge" />
     <h1>fb<span>-downloader</span></h1>
   </button>
   <div class="row theme-toggle-header" style="gap: 4px;">
@@ -199,6 +199,11 @@
       </div>
       <p class="hint" data-i18n="hint_translate_description">Best-effort (uses Google Translate, no guarantee) — applies to what's shown in the results and to the .nfo file.</p>
       <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_facebook_api_token">Facebook API token</label>
+        <span class="hint" id="facebook-token-status"></span>
+      </div>
+      <p class="hint" data-i18n="hint_facebook_api_token">Optional, read-only here — improves profile poster fetching. Set FACEBOOK_ACCESS_TOKEN in your .env file (never entered in this UI, never stored in the database) — see the README.</p>
+      <div class="row" style="margin-top: 10px;">
         <label style="width:220px;" data-i18n="label_ui_language"><svg class="icon"><use href="#icon-globe"/></svg>Interface language</label>
         <input type="text" id="setting-language" list="language-options" class="grow" />
         <datalist id="language-options"></datalist>
@@ -253,13 +258,13 @@
 
 </main>
 
-<script src="i18n.js?v=20260913"></script>
-<script src="app.js?v=20260913"></script>
+<script src="i18n.js?v=20260914"></script>
+<script src="app.js?v=20260914"></script>
 <script>
   // registers the minimal service worker so Android/Chrome offers
   // "Add to Home screen" / "Install app" for a proper standalone PWA
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js?v=20260913").catch(() => {
+    navigator.serviceWorker.register("sw.js?v=20260914").catch(() => {
       // installability just won't be offered — not a functional problem
     });
   }

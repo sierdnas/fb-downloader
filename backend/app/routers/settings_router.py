@@ -60,6 +60,10 @@ def get_settings() -> dict:
         "log_level": settings.log_level,
         "theme": settings.theme,
         "translate_description": settings.translate_description,
+        # read-only: reflects whether FACEBOOK_ACCESS_TOKEN is set in
+        # .env — the value itself is NEVER exposed here or stored in the
+        # DB, only this yes/no flag (see nfo.py/config.py for why)
+        "facebook_access_token_configured": bool(settings.facebook_access_token),
         "media_root": str(settings.media_root),
         "photo_media_root": str(settings.photo_media_root),
         "available_tokens": ["{date}", "{profile}", "{title}", "{id}", "{type}", "{season}"],

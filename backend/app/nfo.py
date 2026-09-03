@@ -11,11 +11,14 @@ them, so they stay organized in {profile}/Photo with no metadata generated.
 from pathlib import Path
 from xml.sax.saxutils import escape
 import json
+import re
 import subprocess
 import urllib.error
 import urllib.request
 
 from . import log_buffer
+from .config import settings
+from .facebook import build_cookie_header
 from .naming import clean_display_title, format_display_title
 
 
@@ -39,6 +42,43 @@ def write_tvshow_nfo(profile_dir: Path, profile: str) -> Path:
     return nfo_path
 
 
+def _request_headers() -> dict:
+    """Common headers for the direct HTTP requests this module makes:
+    a User-Agent, plus the user's Facebook session cookies when a
+    cookies.txt is configured — some of Facebook's endpoints behave
+    differently for anonymous vs authenticated requests (e.g. handing
+    back the generic placeholder silhouette instead of the real picture
+    for an anonymous request to a profile that requires login to view)."""
+    headers = {"User-Agent": "Mozilla/5.0"}
+    cookie_header = build_cookie_header()
+    if cookie_header:
+        headers["Cookie"] = cookie_header
+    return headers
+
+
+def _append_access_token(url: str) -> str:
+    """Adds the optional Graph API access token (FACEBOOK_ACCESS_TOKEN,
+    see config.py) to a graph.facebook.com URL, when configured.
+    Session cookies do NOT authenticate Graph API calls — this is the
+    real credential that endpoint expects; without it,
+    graph.facebook.com/{id}/picture has been observed returning the
+    generic silhouette placeholder even for pages that definitely have
+    a real photo."""
+    if not settings.facebook_access_token:
+        return url
+    separator = "&" if "?" in url else "?"
+    return f"{url}{separator}access_token={settings.facebook_access_token}"
+
+
+def _mask_url_for_log(url: str) -> str:
+    """Strips the access_token value out of a URL before logging it —
+    the in-app Log tab is meant to be safely copy-pasteable for
+    debugging (including sharing it with someone else, or with an AI
+    assistant), and a Graph API token is a credential, not something
+    that should ever end up there in the clear."""
+    return re.sub(r"([?&]access_token=)[^&]+", r"\1***", url)
+
+
 def _download_image(url: str, dest_path: Path) -> "Path | None":
     """Downloads an image from any URL and saves it to dest_path.
     Returns None (without raising) for any kind of failure: network,
@@ -46,25 +86,26 @@ def _download_image(url: str, dest_path: Path) -> "Path | None":
     where missing artwork isn't an error. Every attempt is logged (at
     level 2, or level 0 on failure) so a failure can actually be
     diagnosed from the Log tab instead of failing silently."""
+    log_url = _mask_url_for_log(url)
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(url, headers=_request_headers())
         with urllib.request.urlopen(req, timeout=10) as resp:
             content_type = resp.headers.get("Content-Type", "")
             if resp.status == 200 and content_type.startswith("image/"):
                 dest_path.parent.mkdir(parents=True, exist_ok=True)
                 dest_path.write_bytes(resp.read())
-                log_buffer.log(2, f"Image downloaded: {url} -> {dest_path.name}")
+                log_buffer.log(2, f"Image downloaded: {log_url} -> {dest_path.name}")
                 return dest_path
-            log_buffer.log(0, f"Image download got an unexpected response for {url}: status={resp.status}, content-type={content_type!r}")
+            log_buffer.log(0, f"Image download got an unexpected response for {log_url}: status={resp.status}, content-type={content_type!r}")
     except urllib.error.HTTPError as exc:
         body_snippet = ""
         try:
             body_snippet = exc.read(300).decode("utf-8", errors="replace")
         except Exception:  # noqa: BLE001
             pass
-        log_buffer.log(0, f"Image download failed for {url}: HTTP {exc.code} {exc.reason}{' — ' + body_snippet if body_snippet else ''}")
+        log_buffer.log(0, f"Image download failed for {log_url}: HTTP {exc.code} {exc.reason}{' — ' + body_snippet if body_snippet else ''}")
     except Exception as exc:  # noqa: BLE001 - missing artwork is not a fatal error
-        log_buffer.log(0, f"Image download failed for {url}: {type(exc).__name__}: {exc}")
+        log_buffer.log(0, f"Image download failed for {log_url}: {type(exc).__name__}: {exc}")
     return None
 
 
@@ -76,17 +117,21 @@ def _fetch_facebook_picture_url(candidate: str) -> "tuple[str | None, bool]":
     often also when the request lacks permissions Facebook now expects
     even for "public" pictures. Without this check, that generic gray
     silhouette gets saved as if it were a real poster, indistinguishable
-    from a genuine photo by HTTP status/content-type alone.
+    from a genuine photo by HTTP status/content-type alone. Includes the
+    user's session cookies when available, and the Graph API access
+    token when configured (see _append_access_token — session cookies
+    alone have NOT been sufficient to avoid the silhouette in practice).
     Returns (url, is_silhouette); url is None if the metadata call itself fails."""
-    meta_url = f"https://graph.facebook.com/{candidate}/picture?width=720&height=720&redirect=false"
+    meta_url = _append_access_token(f"https://graph.facebook.com/{candidate}/picture?width=720&height=720&redirect=false")
+    log_url = _mask_url_for_log(meta_url)
     try:
-        req = urllib.request.Request(meta_url, headers={"User-Agent": "Mozilla/5.0"})
+        req = urllib.request.Request(meta_url, headers=_request_headers())
         with urllib.request.urlopen(req, timeout=10) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
         data = payload.get("data", {})
         return data.get("url"), bool(data.get("is_silhouette"))
     except Exception as exc:  # noqa: BLE001 - falls back to a direct download attempt
-        log_buffer.log(2, f"Could not check picture metadata for {candidate}, will try a direct download instead: {exc}")
+        log_buffer.log(2, f"Could not check picture metadata for {candidate} ({log_url}), will try a direct download instead: {exc}")
         return None, False
 
 
@@ -123,7 +168,7 @@ def write_show_poster(profile_dir: Path, candidate_ids: "list[str | None]") -> "
             # metadata check itself failed (network hiccup, endpoint
             # changed...): falls back to the direct picture URL anyway,
             # best-effort — it just won't have the silhouette check
-            image_url = f"https://graph.facebook.com/{candidate}/picture?width=720&height=720"
+            image_url = _append_access_token(f"https://graph.facebook.com/{candidate}/picture?width=720&height=720")
         result = _download_image(image_url, poster_path)
         if result:
             return result

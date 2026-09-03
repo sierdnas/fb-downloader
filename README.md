@@ -25,6 +25,10 @@ per profile**.
 |---|
 | ![Download tab on mobile, with hamburger menu](screenshots/download-mobile.png) |
 
+| Jellyfin Library |
+|---|
+| ![Jellyfin Library Facebook Videos](screenshots/jellyfin.png) |
+
 ## Stack
 
 - FastAPI (backend + API) + SQLite (download history, deduplication)
@@ -76,7 +80,15 @@ renewed when the Facebook session expires.
     exposes it, which is rare) and the page's vanity username extracted
     from the URL itself (e.g. `TennisPowerAcademy360`, more reliable for
     public Pages); silently skipped if neither works, and never
-    overwrites an existing poster
+    overwrites an existing poster. **In practice, this endpoint now
+    reliably fails** for any Page you don't personally administer —
+    tested (2026-09) with both session cookies and an App Access Token,
+    both blocked by Facebook (silhouette placeholder, then a "missing
+    permissions" error requiring App Review). Detects and skips
+    Facebook's generic silhouette placeholder rather than saving it as
+    a fake poster (via the Graph API's `is_silhouette` flag) — see
+    `FACEBOOK_ACCESS_TOKEN` in `.env.example` for the full story and
+    why it's unlikely to help for third-party pages.
   - `fanart.jpg` in the profile folder, best-effort: **not** the real
     Facebook cover photo (that requires authenticated Graph API access
     with special permissions, not obtainable via simple scraping) — uses
@@ -339,6 +351,10 @@ also delete sibling photos not selected for re-download.
 
 ## Known limitations
 
+- Profile posters (`poster.jpg`) reliably fail to fetch for any Facebook
+  Page you don't personally administer — see the "Jellyfin metadata"
+  section above for what was tried and why. Fanart and episode
+  thumbnails are unaffected.
 - Facebook frequently changes its markup: the yt-dlp/gallery-dl
   extractors can break and may need updating
   (`pip install -U yt-dlp gallery-dl` in the image).
@@ -370,4 +386,3 @@ also delete sibling photos not selected for re-download.
   with different permissions are needed in the future)
 - Push/email notification (not just an in-app banner) when cookies expire
 - Full translations for the remaining languages in the picker
-

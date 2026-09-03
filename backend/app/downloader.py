@@ -380,11 +380,29 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
     except json.JSONDecodeError:
         return [], "gallery-dl returned output that couldn't be parsed"
 
+    # gallery-dl's internal message status codes (from gallery_dl.job.Message):
+    # Directory=2, Url=3, Queue=6. Confirmed by reading job.py's DataJob
+    # class directly, rather than guessing from --dump-json output shape.
+    _MSG_DIRECTORY = 2
+
     results = []
     for entry in raw:
         # gallery-dl --dump-json produces, depending on the entry type:
         #   [status, url, metadata]  <- downloadable file (e.g. a photo)
-        #   [status, metadata]       <- "container" entry (album/directory)
+        #   [status, metadata]       <- "container"/Directory entry (2 elements, no url slot at all)
+        status = entry[0] if isinstance(entry, list) and entry else None
+
+        # Facebook VIDEO entries are the tricky case: gallery-dl's
+        # Directory message reuses the SAME fully-populated metadata
+        # dict as the real downloadable file (already containing a
+        # "url" key) — a naive "does it have a url" check treats it as
+        # a second downloadable item, duplicating every video/reel
+        # result. Filtering by the message's own status code (2 =
+        # Directory, always a container, never a file) is unambiguous,
+        # unlike inferring it from the URL slot's shape.
+        if status == _MSG_DIRECTORY:
+            continue
+
         # The file's URL may live ONLY in the separate list element
         # (entry[1]), not necessarily inside the metadata itself — it
         # depends on the extractor. Previously I only looked for the URL
@@ -392,10 +410,10 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
         # failed for albums (where gallery-dl uses a different path and
         # the URL only lives in entry[1]): so now I look in both places.
         if isinstance(entry, list):
-            entry_url = entry[1] if len(entry) >= 3 and isinstance(entry[1], str) else None
+            raw_entry_url = entry[1] if len(entry) >= 3 and isinstance(entry[1], str) else None
             meta = entry[-1]
         else:
-            entry_url = None
+            raw_entry_url = None
             meta = entry
 
         if not isinstance(meta, dict):
@@ -406,14 +424,21 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
         # treated as valid photos, ending up with a fake fb_id (the
         # result count, e.g. "0" for the first spurious entry) and no
         # date: the "empty" rows seen in the UI. Discards them.
-        image_url = meta.get("url") or entry_url
+        image_url = raw_entry_url or meta.get("url")
         if not image_url:
             continue
 
         # gallery-dl's video extractor (used for the /reel/ -> /watch/
-        # rewrite above) tags its entries with type "video" — without
-        # this check they'd be silently mislabeled as photos, saved with
-        # the wrong extension/folder structure downstream.
+        # rewrite above) also emits a SEPARATE entry for the audio-only
+        # track (tagged type "audio", not "video") — not something we
+        # want to save as if it were a standalone photo or video.
+        if meta.get("type") == "audio":
+            continue
+
+        # gallery-dl's video extractor tags its (real, non-audio)
+        # entries with type "video" — without this check they'd be
+        # silently mislabeled as photos, saved with the wrong
+        # extension/folder structure downstream.
         is_video = meta.get("type") == "video"
 
         fb_id = str(

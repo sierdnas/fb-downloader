@@ -41,6 +41,46 @@ def cookies_file_path() -> "Path | None":
     return settings.cookies_path if cookies_present() else None
 
 
+def build_cookie_header(domain_filter: str = "facebook.com") -> str:
+    """Builds a "name=value; name2=value2" Cookie header string from the
+    cookies.txt file (Netscape format), for the direct HTTP requests
+    this app makes itself (poster/fanart fetching in nfo.py) — yt-dlp
+    and gallery-dl already get the whole file via --cookies, but those
+    are separate, ad-hoc urllib requests that otherwise go out
+    completely anonymous even when a valid session is configured, which
+    can matter: some of Facebook's endpoints behave differently (e.g.
+    returning the generic placeholder silhouette instead of the real
+    picture) for anonymous vs authenticated requests. Only includes
+    cookies whose domain matches domain_filter (a leading "." in the
+    file, meaning "this and all subdomains", still matches). Returns an
+    empty string if no cookies file is present or nothing matches."""
+    if not cookies_present():
+        return ""
+
+    pairs: list[str] = []
+    for raw_line in settings.cookies_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            if not line.startswith("#HttpOnly_"):
+                continue
+            line = line[len("#HttpOnly_"):]
+
+        parts = line.split("\t")
+        if len(parts) < 7:
+            continue
+
+        domain, _flag, _path, _secure, _expiry, name, value = parts[:7]
+        domain_bare = domain.lstrip(".")
+        if domain_bare != domain_filter and not domain_bare.endswith("." + domain_filter):
+            continue
+
+        pairs.append(f"{name}={value}")
+
+    return "; ".join(pairs)
+
+
 def _parse_cookie_expiries(cookies_path: Path) -> dict[str, datetime]:
     """Extracts {cookie_name: expiry_date} from the cookies.txt file
     (Netscape format). Cookies with expiry 0 are "session" cookies (no
