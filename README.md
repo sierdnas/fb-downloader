@@ -25,10 +25,6 @@ per profile**.
 |---|
 | ![Download tab on mobile, with hamburger menu](screenshots/download-mobile.png) |
 
-| Jellyfin Library |
-|---|
-| ![Jellyfin Facebook Video Library](screenshots/jellyfin.png) |
-
 ## Stack
 
 - FastAPI (backend + API) + SQLite (download history, deduplication)
@@ -349,6 +345,21 @@ also delete sibling photos not selected for re-download.
 - yt-dlp only recognizes direct links to a single video/reel/post, not a
   "bare" profile/page link; for profiles, the gallery-dl fallback works,
   mainly for photos.
+- yt-dlp's Facebook extractor can fail on some individual posts/reels/
+  photo posts with a generic "Cannot parse data" error — a known,
+  currently-unfixed upstream bug (confirmed on the latest yt-dlp
+  release at the time of writing), not something fixable in this app's
+  code. For reels specifically, there's an experimental fallback: since
+  gallery-dl has no support at all for `/reel/` URLs (confirmed by
+  reading its source — that URL shape was simply never implemented),
+  the app rewrites it to the equivalent `/watch/?v={id}` URL (reels are
+  stored as videos internally, so the same ID often works there too)
+  and, if that succeeds, downloads the direct CDN video file URL
+  instead of going back through yt-dlp's broken page parser. Not
+  guaranteed to work for every reel — if it doesn't, the underlying
+  yt-dlp bug is worth reporting at
+  https://github.com/yt-dlp/yt-dlp/issues with the exact error message
+  from the Log tab.
 - Private content requires valid session cookies.
 - Respect Facebook's Terms of Service and the rights over the content you
   download.

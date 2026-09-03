@@ -313,6 +313,28 @@ def _resolve_share_link(url: str) -> str:
         return url
 
 
+_REEL_URL_RE = re.compile(r"/reel/(\d+)")
+
+
+def _rewrite_reel_url_for_gallerydl(url: str) -> str:
+    """gallery-dl's Facebook extractor has NO pattern at all for
+    /reel/{id} URLs — confirmed by reading its source
+    (extractor/facebook.py): only /{user}/videos/{id} and
+    /watch/?v={id} are recognized, "/reel/" was simply never
+    implemented, it's not a bug to work around. Facebook reels are
+    stored as videos internally, so the same ID also often resolves via
+    the /watch/?v={id} URL, which IS supported. EXPERIMENTAL: not
+    guaranteed to work for every reel (untested against live Facebook
+    from this environment), but costs nothing to try since the /reel/
+    URL itself would otherwise fail unconditionally."""
+    match = _REEL_URL_RE.search(url)
+    if not match:
+        return url
+    rewritten = f"https://www.facebook.com/watch/?v={match.group(1)}"
+    log_buffer.log(2, f"gallery-dl has no /reel/ support at all; trying the equivalent watch URL instead: {rewritten}")
+    return rewritten
+
+
 def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
     """Fallback for profile/page/album URLs: gallery-dl in 'dump' mode
     (--dump-json) downloads nothing, just lists the metadata.
@@ -320,7 +342,8 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
     went fine, otherwise it explains why nothing was found (previously
     it was silently ignored, making it impossible to understand the
     reason for a failure)."""
-    url = _resolve_share_link(url)
+    original_url = _resolve_share_link(url)
+    url = _rewrite_reel_url_for_gallerydl(original_url)
     cmd = ["gallery-dl", "--dump-json", "--no-download", url]
     cookies = cookies_file_path()
     if cookies:
@@ -387,6 +410,12 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
         if not image_url:
             continue
 
+        # gallery-dl's video extractor (used for the /reel/ -> /watch/
+        # rewrite above) tags its entries with type "video" — without
+        # this check they'd be silently mislabeled as photos, saved with
+        # the wrong extension/folder structure downstream.
+        is_video = meta.get("type") == "video"
+
         fb_id = str(
             meta.get("id")
             or meta.get("photo_id")
@@ -395,7 +424,7 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
             or meta.get("post_id")
         ) if any([meta.get("id"), meta.get("photo_id"), meta.get("media_id"), meta.get("fbid"), meta.get("post_id")]) else None
         if not fb_id:
-            # no recognizable ID: not a reliable photo to track anyway
+            # no recognizable ID: not a reliable item to track anyway
             # (deduplication relies on the ID)
             continue
 
@@ -406,10 +435,11 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
         all_tags = existing_tags + [tg for tg in extracted_tags if tg.lower() not in seen_lower]
 
         # POST identity (to group multiple photos from the same post
-        # into the same folder): derived from the analyzed URL, not from
-        # the individual photo's metadata (see _derive_post_id_from_url)
-        # — this guarantees the same value for every photo in the album
-        post_id = _derive_post_id_from_url(url)
+        # into the same folder): derived from the ORIGINAL analyzed URL
+        # (before any /reel/ -> /watch/ rewrite), not from the
+        # individual item's metadata (see _derive_post_id_from_url) —
+        # this guarantees the same value for every photo in the album
+        post_id = _derive_post_id_from_url(original_url)
 
         results.append(
             {
@@ -421,9 +451,9 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
                 "tags": all_tags,
                 "profile": meta.get("username") or meta.get("user") or "unknown",
                 "profile_id": meta.get("user_id") or meta.get("owner_id"),
-                "media_type": "photo",
+                "media_type": ("reel" if "/reel/" in original_url else "video") if is_video else "photo",
                 "publish_date": _parse_iso_date(meta.get("date")),
-                "thumbnail_url": image_url,
+                "thumbnail_url": None if is_video else image_url,
             }
         )
     if results:
@@ -436,7 +466,7 @@ def _analyze_with_gallerydl(url: str) -> "tuple[list[dict], str | None]":
     raw_preview = proc.stdout.strip()
     if len(raw_preview) > 800:
         raw_preview = raw_preview[:800] + "… (truncated)"
-    return [], f"gallery-dl didn't find any photos at this URL. Raw output preview: {raw_preview or '(empty)'}"
+    return [], f"gallery-dl didn't find any usable items at this URL. Raw output preview: {raw_preview or '(empty)'}"
 
 
 def _parse_upload_date(raw: "str | None") -> "datetime | None":
