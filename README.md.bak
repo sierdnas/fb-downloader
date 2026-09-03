@@ -25,10 +25,6 @@ per profile**.
 |---|
 | ![Download tab on mobile, with hamburger menu](screenshots/download-mobile.png) |
 
-| Jellyfin Library |
-|---|
-| ![Jellyfin Facebook Video Library](screenshots/jellyfin.png) |
-
 ## Stack
 
 - FastAPI (backend + API) + SQLite (download history, deduplication)
