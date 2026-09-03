@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Sfondo pieno fino ai bordi (nessun cerchio proprio): qualunque forma
+       di ritaglio applichi Android (cerchio, ottagono, squircle...) taglia
+       solo colore uniforme, senza creare bordi sfaccettati visibili. -->
+  <rect width="100" height="100" fill="#1877F2"/>
+  <!-- Contenuto ridotto e centrato nella "safe zone": resta visibile per
+       intero qualunque sia la maschera di ritaglio applicata. -->
+  <g transform="translate(50,50) scale(0.62) translate(-50,-50)">
+    <path d="M34,8 L66,8 L66,44 L84,44 L50,86 L16,44 L34,44 Z" fill="#ffffff"/>
+    <text x="50" y="53" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="42" font-weight="700" fill="#1877F2">f</text>
+  </g>
+</svg>

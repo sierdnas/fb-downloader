@@ -495,9 +495,36 @@ async function loadSettings() {
   $("#setting-filename-photo").value = s.filename_template_photo;
   $("#setting-dateformat").value = s.date_format;
   $("#setting-nfo").checked = s.generate_nfo;
+  $("#setting-translate").checked = s.translate_description;
   $("#setting-language").value = languageLabel(s.ui_language || "en");
   applyTranslations(s.ui_language || "en");
+  applyTheme(s.theme || "dark");
 }
+
+// ---------- Theme ----------
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  try {
+    localStorage.setItem("theme", theme);
+  } catch (e) {
+    // localStorage unavailable (e.g. private browsing) — theme just won't persist across reloads
+  }
+  $$(".theme-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.theme === theme);
+  });
+}
+
+$$(".theme-btn").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const theme = btn.dataset.theme;
+    applyTheme(theme);
+    await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ theme }),
+    });
+  });
+});
 
 $("#btn-save-settings").addEventListener("click", async () => {
   const langCode = resolveLanguageCode($("#setting-language").value);
@@ -508,6 +535,7 @@ $("#btn-save-settings").addEventListener("click", async () => {
     filename_template_photo: $("#setting-filename-photo").value,
     date_format: $("#setting-dateformat").value,
     generate_nfo: $("#setting-nfo").checked,
+    translate_description: $("#setting-translate").checked,
     ui_language: langCode,
   };
   const res = await fetch("/api/settings", {
@@ -686,7 +714,69 @@ $("#btn-clear-logs").addEventListener("click", async () => {
   loadLogs();
 });
 
+// The URL box's content is persisted to localStorage: each share reopens
+// the PWA as a fresh page load (a new browser navigation, not a
+// continuation of the same in-memory session), so the textarea always
+// starts empty in the DOM — without this, "appending" a newly shared
+// link would append to nothing and silently lose whatever was shared
+// before it.
+const URL_DRAFT_KEY = "fbUrlDraft";
+
+function saveUrlDraft() {
+  try {
+    localStorage.setItem(URL_DRAFT_KEY, $("#fb-url").value);
+  } catch (e) {
+    // localStorage unavailable (e.g. private browsing) — the draft just won't persist
+  }
+}
+
+function loadUrlDraft() {
+  try {
+    return localStorage.getItem(URL_DRAFT_KEY) || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+$("#fb-url").addEventListener("input", saveUrlDraft);
+
+$("#btn-clear-url").addEventListener("click", () => {
+  $("#fb-url").value = "";
+  saveUrlDraft(); // persists the now-empty value too, otherwise the
+                   // cleared links would reappear on the next page load
+});
+
+// handles a link shared from another Android app (e.g. Facebook's
+// "Share" button) via the PWA share target: main.py's /share-target
+// redirects here with ?shared_url=...
+function handleSharedUrl() {
+  const textarea = $("#fb-url");
+
+  // restores whatever was in the box before this page load (previous
+  // shares, or links typed in and not yet analyzed)
+  const draft = loadUrlDraft();
+  if (draft && !textarea.value.trim()) {
+    textarea.value = draft;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const sharedUrl = params.get("shared_url");
+  if (sharedUrl) {
+    const existing = textarea.value.trim();
+    textarea.value = existing ? `${existing}\n${sharedUrl}` : sharedUrl;
+    switchTab("download");
+
+    // removes the query parameter from the address bar so refreshing the
+    // page doesn't re-append the same link again
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, "", cleanUrl);
+  }
+
+  saveUrlDraft();
+}
+
 // init
 populateLanguageOptions();
 loadSettings();
 checkCookieBanner();
+handleSharedUrl();

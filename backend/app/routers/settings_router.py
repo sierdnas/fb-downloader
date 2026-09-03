@@ -17,13 +17,17 @@ _PERSISTED_KEYS = (
     "generate_nfo",
     "ui_language",
     "log_level",
+    "theme",
+    "translate_description",
 )
+
+_BOOL_KEYS = ("generate_nfo", "translate_description")
 
 
 def load_persisted_settings(session: Session) -> None:
     """Called at startup: overrides the defaults with any values saved in the DB."""
     for row in session.exec(select(AppSettings).where(AppSettings.key.in_(_PERSISTED_KEYS))):
-        if row.key == "generate_nfo":
+        if row.key in _BOOL_KEYS:
             setattr(settings, row.key, row.value == "true")
         elif row.key == "log_level":
             try:
@@ -54,6 +58,8 @@ def get_settings() -> dict:
         "generate_nfo": settings.generate_nfo,
         "ui_language": settings.ui_language,
         "log_level": settings.log_level,
+        "theme": settings.theme,
+        "translate_description": settings.translate_description,
         "media_root": str(settings.media_root),
         "photo_media_root": str(settings.photo_media_root),
         "available_tokens": ["{date}", "{profile}", "{title}", "{id}", "{type}", "{season}"],
@@ -86,6 +92,12 @@ def update_settings(update: SettingsUpdate, session: Session = Depends(get_sessi
     if update.log_level is not None:
         settings.log_level = update.log_level
         _persist(session, "log_level", str(update.log_level))
+    if update.theme is not None:
+        settings.theme = update.theme
+        _persist(session, "theme", update.theme)
+    if update.translate_description is not None:
+        settings.translate_description = update.translate_description
+        _persist(session, "translate_description", "true" if update.translate_description else "false")
 
     session.commit()
     return get_settings()

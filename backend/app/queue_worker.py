@@ -141,11 +141,13 @@ def _process_item(item: MediaPreview) -> None:
             if settings.generate_nfo and is_video_like:
                 profile_dir = settings.media_root / slugify_physical(item.profile)
                 nfo.write_tvshow_nfo(profile_dir, item.profile)
-                nfo.write_show_poster(
+                show_poster = nfo.write_show_poster(
                     profile_dir,
                     [item.profile_id, downloader.extract_page_identifier(item.source_url)],
                 )
                 nfo.write_show_fanart(profile_dir, item.thumbnail_url)
+                nfo.write_season_poster(final_path.parent, show_poster)
+                nfo.write_episode_thumbnail(final_path)
                 nfo.write_episode_nfo(
                     final_path,
                     fb_id=item.fb_id,

@@ -59,6 +59,15 @@ class Settings(BaseSettings):
     # output). Persisted like the other settings.
     log_level: int = 1
 
+    # Web UI color theme: "dark" (default, Facebook-style) or "light".
+    theme: str = "dark"
+
+    # Best-effort translation of the post description into ui_language
+    # (uses Google Translate's free endpoint, no API key — see
+    # translate.py for the caveats). Off by default: it's an extra
+    # network call per item and depends on an unofficial endpoint.
+    translate_description: bool = False
+
     @property
     def db_path(self) -> Path:
         return self.config_dir / "fb-downloader.db"

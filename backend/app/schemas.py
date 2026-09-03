@@ -54,6 +54,8 @@ class SettingsUpdate(BaseModel):
     generate_nfo: Optional[bool] = None
     ui_language: Optional[str] = None
     log_level: Optional[int] = None
+    theme: Optional[str] = None
+    translate_description: Optional[bool] = None
 
 
 class LoginStatus(BaseModel):

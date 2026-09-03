@@ -4,12 +4,33 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>fb-downloader</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260901" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260913" />
+<link rel="manifest" href="manifest.json?v=20260913" />
+<link rel="apple-touch-icon" href="icons/icon-180.png?v=20260913" />
+<meta name="theme-color" content="#1877F2" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="fb-downloader" />
+<!-- Applies a cached theme choice BEFORE the stylesheet renders, to
+     avoid a flash of the wrong theme on load; the real source of truth
+     is the server-persisted setting, re-applied once /api/settings
+     responds (see applyTheme() in app.js). -->
+<script>
+  (function () {
+    try {
+      var cachedTheme = localStorage.getItem("theme");
+      if (cachedTheme) document.documentElement.setAttribute("data-theme", cachedTheme);
+    } catch (e) {
+      // localStorage unavailable — falls back to the default theme until settings load
+    }
+  })();
+</script>
 <!-- Note for maintainers: change ?v=... on these files (and on the
      favicon) EVERY TIME they're modified, otherwise the user's browser
      may keep serving a cached copy even after a container rebuild,
      masking fixes that were just applied. -->
-<link rel="stylesheet" href="style.css?v=20260901" />
+<link rel="stylesheet" href="style.css?v=20260913" />
 </head>
 <body>
 
@@ -32,13 +53,19 @@
   <symbol id="icon-logs" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></symbol>
   <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
   <symbol id="icon-menu" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></symbol>
+  <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
 </svg>
 
 <header>
   <button class="brand" id="brand-logo" type="button" aria-label="fb-downloader — Download">
-    <div class="brand-badge">f</div>
+    <img src="favicon.svg?v=20260913" alt="fb-downloader" class="brand-badge" />
     <h1>fb<span>-downloader</span></h1>
   </button>
+  <div class="row theme-toggle-header" style="gap: 4px;">
+    <button type="button" class="theme-btn active" id="btn-theme-light" data-theme="light" title="Light" aria-label="Light theme"><svg class="icon icon-only"><use href="#icon-sun"/></svg></button>
+    <button type="button" class="theme-btn" id="btn-theme-dark" data-theme="dark" title="Dark" aria-label="Dark theme"><svg class="icon icon-only"><use href="#icon-moon"/></svg></button>
+  </div>
   <button class="mobile-menu-btn" id="btn-mobile-menu" type="button" aria-label="Menu">
     <svg class="icon icon-only icon-lg"><use href="#icon-menu"/></svg>
   </button>
@@ -61,11 +88,12 @@
   <!-- TAB: DOWNLOAD -->
   <section id="tab-download" class="tab-content active">
     <div class="panel">
-      <div class="row">
-        <textarea id="fb-url" class="grow" rows="3" data-i18n-placeholder="url_placeholder" placeholder="Paste one or more Facebook links, one per line…"></textarea>
-        <button class="btn" id="btn-analyze"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="btn_analyze">Analyze</span></button>
-      </div>
       <p class="hint" data-i18n="hint_multi_url">One link per line to analyze several posts/reels at once.</p>
+      <textarea id="fb-url" rows="3" style="width:100%; display:block;" data-i18n-placeholder="url_placeholder" placeholder="Paste one or more Facebook links, one per line…"></textarea>
+      <div class="row" style="justify-content: center; margin-top: 10px;">
+        <button class="btn" id="btn-analyze"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="btn_analyze">Analyze</span></button>
+        <button class="btn secondary" id="btn-clear-url"><svg class="icon"><use href="#icon-trash"/></svg><span data-i18n="btn_clear_url">Clear</span></button>
+      </div>
       <div class="chips" id="type-filter">
         <div class="chip selected" data-type="video"><svg class="icon"><use href="#icon-video"/></svg><span data-i18n="chip_video">Video</span></div>
         <div class="chip selected" data-type="photo"><svg class="icon"><use href="#icon-photo"/></svg><span data-i18n="chip_photo">Photo</span></div>
@@ -166,6 +194,11 @@
         <input type="checkbox" id="setting-nfo" />
       </div>
       <div class="row" style="margin-top: 10px;">
+        <label style="width:220px;" data-i18n="label_translate_description">Translate description into interface language</label>
+        <input type="checkbox" id="setting-translate" />
+      </div>
+      <p class="hint" data-i18n="hint_translate_description">Best-effort (uses Google Translate, no guarantee) — applies to what's shown in the results and to the .nfo file.</p>
+      <div class="row" style="margin-top: 10px;">
         <label style="width:220px;" data-i18n="label_ui_language"><svg class="icon"><use href="#icon-globe"/></svg>Interface language</label>
         <input type="text" id="setting-language" list="language-options" class="grow" />
         <datalist id="language-options"></datalist>
@@ -220,7 +253,16 @@
 
 </main>
 
-<script src="i18n.js?v=20260901"></script>
-<script src="app.js?v=20260901"></script>
+<script src="i18n.js?v=20260913"></script>
+<script src="app.js?v=20260913"></script>
+<script>
+  // registers the minimal service worker so Android/Chrome offers
+  // "Add to Home screen" / "Install app" for a proper standalone PWA
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js?v=20260913").catch(() => {
+      // installability just won't be offered — not a functional problem
+    });
+  }
+</script>
 </body>
 </html>

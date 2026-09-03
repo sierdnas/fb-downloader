@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from .. import analyze_jobs
+from .. import analyze_jobs, translate
 from ..config import settings
 from ..db import get_session
 from ..models import AnalyzedSource, MediaItem
@@ -70,6 +70,10 @@ def get_analyze_status(job_id: str, session: Session = Depends(get_session)) -> 
                 post_id=item.get("post_id"),
             )
 
+            description = item.get("description")
+            if settings.translate_description and description:
+                description = translate.translate_text(description, settings.ui_language)
+
             previews.append(
                 MediaPreview(
                     fb_id=item["fb_id"],
@@ -80,7 +84,7 @@ def get_analyze_status(job_id: str, session: Session = Depends(get_session)) -> 
                     media_type=item["media_type"],
                     title=item["title"],
                     display_title=format_display_title(item["fb_id"], item["publish_date"]),
-                    description=item.get("description"),
+                    description=description,
                     tags=item.get("tags") or [],
                     publish_date=item["publish_date"],
                     thumbnail_url=item.get("thumbnail_url"),
