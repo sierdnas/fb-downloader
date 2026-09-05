@@ -126,9 +126,20 @@ $("#select-all-results").addEventListener("change", (e) => {
   });
 });
 
+// Collapses back to a compact summary bar once results are showing
+// (mobile only — see style.css), so results can use the full screen
+// instead of sharing it with an input area no longer needed until the
+// user wants to search again.
+$("#btn-expand-input").addEventListener("click", () => {
+  $("#input-panel").classList.remove("collapsed");
+  $("#tab-download").classList.remove("results-active");
+});
+
 function appendResultRows(items, profiles) {
   if (!items || items.length === 0) return;
-  $("#results-panel").style.display = "block";
+  $("#results-panel").classList.add("visible");
+  $("#input-panel").classList.add("collapsed");
+  $("#tab-download").classList.add("results-active");
   const body = $("#results-body");
 
   items.forEach((item) => {
@@ -143,8 +154,29 @@ function appendResultRows(items, profiles) {
       <td>${item.publish_date ? item.publish_date.substring(0, 10) : "—"}</td>
       <td class="path-preview">${item.predicted_path}</td>
     `;
+    // On mobile, only the checkbox + type badge columns stay visible in
+    // the compact row (see the mobile media query); tapping the row
+    // toggles the detail block below open/closed, which on mobile also
+    // includes title/date/path (via renderDetailRow's mobileFields —
+    // on desktop those columns are already visible in the row itself,
+    // so the detail block there only ever shows description/tags).
+    tr.addEventListener("click", (e) => {
+      if (e.target.closest("input")) return; // clicking the checkbox itself must not toggle
+      const detailRow = tr.nextElementSibling;
+      if (detailRow && detailRow.classList.contains("detail-row")) {
+        detailRow.classList.toggle("expanded");
+      }
+    });
     body.appendChild(tr);
-    body.insertAdjacentHTML("beforeend", renderDetailRow(6, item.description, item.tags));
+    body.insertAdjacentHTML(
+      "beforeend",
+      renderDetailRow(6, item.description, item.tags, {
+        title: item.display_title,
+        typeBadge: typeBadge(item.media_type),
+        date: item.publish_date ? item.publish_date.substring(0, 10) : "—",
+        path: item.predicted_path,
+      })
+    );
   });
 
   updateResultsTitle(profiles);
@@ -157,7 +189,7 @@ $("#btn-analyze").addEventListener("click", async () => {
   if (urls.length === 0) return;
 
   $("#btn-analyze").disabled = true;
-  $("#results-panel").style.display = "none";
+  $("#results-panel").classList.remove("visible");
   $("#results-body").innerHTML = "";
   $("#select-all-results").checked = false;
   lastResults = [];
@@ -259,7 +291,7 @@ function waitForAnalyzeJob(jobId) {
   });
 }
 
-function renderDetailRow(colspan, description, tags) {
+function renderDetailRow(colspan, description, tags, mobileFields) {
   const hasDescription = description && description.trim().length > 0;
   const hasTags = tags && tags.length > 0;
   const descriptionHtml = hasDescription
@@ -269,10 +301,26 @@ function renderDetailRow(colspan, description, tags) {
     ? `<div class="tag-chips">${tags.map((tg) => `<span class="tag-chip">${escapeHtml(tg)}</span>`).join("")}</div>`
     : `<span class="detail-text detail-empty">${t("detail_no_tags")}</span>`;
 
+  // mobileFields (title/type/date/path) is only passed for the results
+  // table on the Download tab: on mobile those columns are hidden from
+  // the compact row, so they need to live here instead; on desktop
+  // they're already visible in the row itself, so .detail-mobile-only
+  // keeps this block hidden there (see the mobile media query in
+  // style.css). History's table doesn't pass this — every column is
+  // always visible there regardless of screen width, so there's
+  // nothing extra to duplicate into the detail block.
+  const mobileFieldsHtml = mobileFields
+    ? `
+          <div class="detail-line detail-mobile-only"><span class="detail-label">${t("th_title")}</span><span class="detail-text">${escapeHtml(mobileFields.title)}</span></div>
+          <div class="detail-line detail-mobile-only"><span class="detail-label">${t("th_type")}</span>${mobileFields.typeBadge}</div>
+          <div class="detail-line detail-mobile-only"><span class="detail-label">${t("th_date")}</span><span class="detail-text">${escapeHtml(mobileFields.date)}</span></div>
+          <div class="detail-line detail-mobile-only"><span class="detail-label">${t("th_predicted_path")}</span><span class="detail-text path-preview">${escapeHtml(mobileFields.path)}</span></div>`
+    : "";
+
   return `
     <tr class="detail-row">
       <td colspan="${colspan}">
-        <div class="detail-block">
+        <div class="detail-block">${mobileFieldsHtml}
           <div class="detail-line"><span class="detail-label">${t("th_description")}</span>${descriptionHtml}</div>
           <div class="detail-line"><span class="detail-label">${t("th_tags")}</span>${tagsHtml}</div>
         </div>
@@ -399,7 +447,7 @@ function removeResultRowByFbId(fbId) {
   updateResultsTitle(lastProfilesSet);
 
   if ($$(".row-select").length === 0) {
-    $("#results-panel").style.display = "none";
+    $("#results-panel").classList.remove("visible");
   }
 }
 
@@ -407,10 +455,10 @@ function renderQueue(items) {
   items = items || [];
   const panel = $("#queue-panel");
   if (items.length === 0) {
-    panel.style.display = "none";
+    panel.classList.remove("visible");
     return;
   }
-  panel.style.display = "block";
+  panel.classList.add("visible");
   const body = $("#queue-body");
   body.innerHTML = "";
   items.forEach((item) => {

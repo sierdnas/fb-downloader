@@ -62,7 +62,9 @@ header {
   padding: 12px 24px;
   display: flex;
   align-items: center;
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 50;
   gap: 8px;
 }
 
@@ -134,6 +136,16 @@ main { padding: 24px; max-width: 1100px; margin: 0 auto; }
 
 .panel > strong { display: flex; align-items: center; }
 
+/* Results/queue panels: hidden by default, shown via a CSS class
+   (not an inline style) — this matters specifically on mobile, where
+   they need to become display:flex instead of display:block once
+   results/downloads are active (see the mobile media query). An
+   inline style set from JS would always win over any external CSS
+   rule regardless of specificity, permanently locking them to
+   display:block and breaking the flex-based full-height layout. */
+#results-panel, #queue-panel { display: none; }
+#results-panel.visible, #queue-panel.visible { display: block; }
+
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 input[type="text"], input[type="url"], input[type="date"], select, textarea {
@@ -165,6 +177,10 @@ button.btn {
 button.btn:hover { background: var(--accent-dark); }
 button.btn.secondary { background: var(--bg-elevated); color: var(--text); }
 button.btn.secondary:hover { background: var(--bg-elevated-hover); }
+/* Only ever shown on mobile once results are up (see the mobile media
+   query) — on desktop, and normally, the full input panel stays visible. */
+#btn-expand-input { display: none; }
+#fb-url { width: 100%; display: block; }
 button.btn.theme-btn.active { background: var(--accent); color: #fff; }
 
 .theme-toggle-header { flex-shrink: 0; }
@@ -241,7 +257,7 @@ th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-s
 
 .thumb { width: 56px; height: 56px; object-fit: cover; border-radius: var(--radius); background: var(--bg-elevated); }
 
-.badge { padding: 2px 9px; border-radius: 10px; font-size: 11px; display: inline-flex; align-items: center; }
+.badge { padding: 2px 9px; border-radius: 10px; font-size: 11px; display: inline-flex; align-items: center; white-space: nowrap; }
 .badge .icon { margin-right: 4px; width: 12px; height: 12px; }
 .badge.video, .badge.reel { background: rgba(24,119,242,0.15); color: var(--accent); }
 .badge.photo { background: rgba(69,189,98,0.15); color: var(--ok); }
@@ -268,6 +284,11 @@ th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-s
 }
 .detail-block { display: flex; flex-direction: column; gap: 6px; }
 .detail-line { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; }
+/* Hidden on desktop by default: title/type/date/path are already
+   visible directly in the results table row there. Shown only within
+   the mobile media query, where those columns are hidden from the
+   compact row instead (see appendResultRows/renderDetailRow in app.js). */
+.detail-mobile-only { display: none; }
 .detail-label {
   color: var(--text-dim);
   text-transform: uppercase;
@@ -337,6 +358,93 @@ th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-s
      should adapt to the screen width, not force a sideways scroll. */
   #results-panel table { display: table; white-space: normal; table-layout: fixed; }
   #results-panel th:nth-child(6), #results-panel td:nth-child(6) { width: 110px; }
+
+  /* Download queue table: same fix as results — without this it kept
+     the generic mobile nowrap/horizontal-scroll behavior, and its long
+     profile names + timestamps pushed it (and the whole page) wider
+     than the screen instead of wrapping, which looked like the results
+     and queue panels were overlapping. */
+  #queue-panel table { display: table; white-space: normal; table-layout: fixed; }
+  #queue-panel th:nth-child(2), #queue-panel td:nth-child(2) { width: 80px; }
+  #queue-panel th:nth-child(4), #queue-panel td:nth-child(4) { width: 84px; }
+  #queue-panel td { word-break: break-word; }
+
+  /* Compact result rows: checkbox, preview thumbnail, and type badge
+     stay visible in the row itself. Title, date, and predicted path
+     move into the tap-to-expand detail block instead (see app.js —
+     that block already exists for description/tags; here it also gets
+     these extra fields via renderDetailRow's mobileFields, shown via
+     .detail-mobile-only). Frees up the row for a dense, scannable list
+     instead of a cramped multi-column table on a narrow screen. */
+  #results-panel th:nth-child(3), #results-panel td:nth-child(3),
+  #results-panel th:nth-child(5), #results-panel td:nth-child(5),
+  #results-panel th:nth-child(6), #results-panel td:nth-child(6) {
+    display: none;
+  }
+  #results-body tr:not(.detail-row) { cursor: pointer; }
+  #results-panel .detail-row { display: none; }
+  #results-panel .detail-row.expanded { display: table-row; }
+  .detail-mobile-only { display: flex; }
+
+  /* Full-height mobile layout: the sticky header (see the base `header`
+     rule) stays pinned at the top; everything below it becomes a flex
+     column so the active tab — and, within it, the results panel once
+     shown — can grow to fill all remaining screen height instead of
+     just flowing to whatever the content adds up to. */
+  html, body { height: 100%; }
+  body { margin: 0; display: flex; flex-direction: column; }
+  main { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+  #tab-download.active { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+  /* Input panel collapses to a single "Edit search" bar once results
+     are showing, so the results panel below can take over the rest of
+     the screen instead of sharing it with an input area that's no
+     longer needed until the user wants to search again. */
+  /* #analyze-status stays visible even when collapsed: it's the only
+     way to see progress for the remaining links in a multi-link batch
+     once the FIRST result already collapsed the input panel — without
+     this, progress past link 1 updates invisibly behind the collapse. */
+  #input-panel.collapsed > *:not(#btn-expand-input):not(#analyze-status) { display: none; }
+  #input-panel.collapsed #btn-expand-input { display: flex; width: 100%; justify-content: center; }
+  #input-panel.collapsed { flex-shrink: 0; }
+
+  #tab-download.active.results-active #results-panel.visible {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  /* min-height: 0 here is the actual fix, not just flex:1 — without it,
+     a flex item defaults to min-height:auto, which means "never shrink
+     below the natural height of your content". That silently defeats
+     the whole point of overflow-y:auto: instead of scrolling once
+     content exceeds the available space, the box just grows past its
+     intended boundary and visually bleeds into whatever comes after it
+     in the flex column (the queue panel, in this case) — this is
+     exactly what caused the two panels to visually overlap. */
+  #tab-download.active.results-active #results-panel.visible .table-scroll {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+  }
+
+  /* Download queue: once it appears (download started), it used to
+     compete for space with the results panel above via flex-shrink,
+     which could overlap them instead of cleanly stacking. Giving it a
+     fixed cap + its own scroll instead removes that ambiguity — it
+     always reserves exactly this much room, no more, no less, and
+     results-panel's flex:1 fills whatever's left below it. */
+  #tab-download.active #queue-panel.visible {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 34vh;
+  }
+  #tab-download.active #queue-panel.visible .table-scroll {
+    flex: 1;
+    max-height: none;
+    min-height: 0; /* same fix as above, for the same reason */
+  }
 
   .panel { padding: 14px; }
 

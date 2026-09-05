@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>fb-downloader</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260914" />
-<link rel="manifest" href="manifest.json?v=20260914" />
-<link rel="apple-touch-icon" href="icons/icon-180.png?v=20260914" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260921" />
+<link rel="manifest" href="manifest.json?v=20260921" />
+<link rel="apple-touch-icon" href="icons/icon-180.png?v=20260921" />
 <meta name="theme-color" content="#1877F2" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -30,7 +30,7 @@
      favicon) EVERY TIME they're modified, otherwise the user's browser
      may keep serving a cached copy even after a container rebuild,
      masking fixes that were just applied. -->
-<link rel="stylesheet" href="style.css?v=20260914" />
+<link rel="stylesheet" href="style.css?v=20260921" />
 </head>
 <body>
 
@@ -59,7 +59,7 @@
 
 <header>
   <button class="brand" id="brand-logo" type="button" aria-label="fb-downloader — Download">
-    <img src="favicon.svg?v=20260914" alt="fb-downloader" class="brand-badge" />
+    <img src="favicon.svg?v=20260921" alt="fb-downloader" class="brand-badge" />
     <h1>fb<span>-downloader</span></h1>
   </button>
   <div class="row theme-toggle-header" style="gap: 4px;">
@@ -87,9 +87,9 @@
 
   <!-- TAB: DOWNLOAD -->
   <section id="tab-download" class="tab-content active">
-    <div class="panel">
+    <div class="panel" id="input-panel">
       <p class="hint" data-i18n="hint_multi_url">One link per line to analyze several posts/reels at once.</p>
-      <textarea id="fb-url" rows="3" style="width:100%; display:block;" data-i18n-placeholder="url_placeholder" placeholder="Paste one or more Facebook links, one per line…"></textarea>
+      <textarea id="fb-url" rows="3" data-i18n-placeholder="url_placeholder" placeholder="Paste one or more Facebook links, one per line…"></textarea>
       <div class="row" style="justify-content: center; margin-top: 10px;">
         <button class="btn" id="btn-analyze"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="btn_analyze">Analyze</span></button>
         <button class="btn secondary" id="btn-clear-url"><svg class="icon"><use href="#icon-trash"/></svg><span data-i18n="btn_clear_url">Clear</span></button>
@@ -100,9 +100,10 @@
         <div class="chip selected" data-type="reel"><svg class="icon"><use href="#icon-reel"/></svg><span data-i18n="chip_reel">Reel</span></div>
       </div>
       <div class="hint" id="analyze-status"></div>
+      <button type="button" class="btn secondary" id="btn-expand-input"><svg class="icon"><use href="#icon-refresh"/></svg><span data-i18n="btn_edit_search">Edit search</span></button>
     </div>
 
-    <div class="panel" id="results-panel" style="display:none;">
+    <div class="panel" id="results-panel">
       <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
         <strong id="results-title">Results</strong>
         <button class="btn" id="btn-download-selected"><svg class="icon"><use href="#icon-download"/></svg><span data-i18n="btn_download_selected">Download selected</span></button>
@@ -124,7 +125,7 @@
       </div>
     </div>
 
-    <div class="panel" id="queue-panel" style="display:none;">
+    <div class="panel" id="queue-panel">
       <strong><svg class="icon"><use href="#icon-history"/></svg><span data-i18n="queue_panel_title">Queued / in progress</span></strong>
       <div class="table-scroll">
         <table>
@@ -258,13 +259,13 @@
 
 </main>
 
-<script src="i18n.js?v=20260914"></script>
-<script src="app.js?v=20260914"></script>
+<script src="i18n.js?v=20260921"></script>
+<script src="app.js?v=20260921"></script>
 <script>
   // registers the minimal service worker so Android/Chrome offers
   // "Add to Home screen" / "Install app" for a proper standalone PWA
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js?v=20260914").catch(() => {
+    navigator.serviceWorker.register("sw.js?v=20260921").catch(() => {
       // installability just won't be offered — not a functional problem
     });
   }
